@@ -5,7 +5,7 @@ window.APCSP_CONFIG = {
 
   // Must match CLASS_CODE in apps-script/Code.gs.
   // Note: this is visible in the page source, so it only blocks stray posts, not determined ones.
-  CLASS_CODE: 'change-this-class-code',
+  CLASS_CODE: 'SHUM AP CSP',
 
   // Ask students for a name or ID before they start, so each entry in the doc is labeled.
   REQUIRE_STUDENT_ID: true
