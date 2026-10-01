@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AP CSP practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="player">
+  <header class="topbar">
+    <a class="back-link" href="./">&larr; All practice</a>
+    <span class="topbar-title" id="title">Loading…</span>
+    <span class="who" id="who"></span>
+  </header>
+  <div class="status-bar" id="status" role="status" hidden></div>
+
+  <section class="gate" id="gate" hidden>
+    <form id="gateForm">
+      <h1>Before you start</h1>
+      <p>Enter your name or student ID so your missed questions are labeled in the class review doc.</p>
+      <label for="sid">Name or ID</label>
+      <input type="text" id="sid" autocomplete="off" maxlength="40">
+      <p class="error-text" id="gateError" aria-live="polite"></p>
+      <button class="primary" type="submit">Start</button>
+    </form>
+  </section>
+
+  <p class="loading" id="loading">Loading…</p>
+  <iframe id="frame" title="Activity" hidden
+          sandbox="allow-scripts allow-modals allow-popups allow-forms"></iframe>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/play.js"></script>
+</body>
+</html>
