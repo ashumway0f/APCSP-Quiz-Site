@@ -113,8 +113,10 @@
     }).then(function (r) { return r.json(); }).then(function (out) {
       if (!out.ok) throw new Error(out.error || 'Not saved');
       setStatus('is-ok', 'Saved ' + lastPayload.missed.length + ' missed question' + (lastPayload.missed.length === 1 ? '' : 's') + ' to the class review doc.');
-    }).catch(function () {
-      setStatus('is-bad', 'Could not save your missed questions. Check your connection, then', true);
+    }).catch(function (err) {
+      var why = err && err.message ? err.message : '';
+      if (/failed to fetch|networkerror|load failed/i.test(why)) why = 'no response from the server';
+      setStatus('is-bad', 'Could not save your missed questions' + (why ? ' (' + why + ')' : '') + '. Check your connection, then', true);
     }).then(function () { sending = false; });
   }
 
