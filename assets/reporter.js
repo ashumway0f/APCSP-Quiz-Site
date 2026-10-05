@@ -46,7 +46,9 @@
       if ((m = line.match(/^(?:correct answer|right answer|correct response)\s*:?\s*(.*)$/i))) {
         mode = 'correct'; if (m[1]) corrParts.push(m[1]); continue;
       }
-      if (mode !== 'pre' && mode !== 'q' && (m = line.match(/^(?:explanation|why|reasoning|rationale)\s*:?\s*(.*)$/i))) {
+      // A label is "Why:" / "Explanation: text", or the word alone on its line. A question that merely
+      // starts with "Why ..." is not a label.
+      if (mode !== 'pre' && mode !== 'q' && (m = line.match(/^(?:explanation|why|reasoning|rationale)\s*(?::\s*(.*))?$/i))) {
         mode = 'expl'; if (m[1]) expl.push(m[1]); continue;
       }
       if (/^topic\s*:/i.test(line)) continue;
