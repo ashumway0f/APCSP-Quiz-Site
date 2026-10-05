@@ -24,7 +24,15 @@
 
   // Turn one .review-item block into {number, question, yourAnswer, correctAnswer, explanation}
   function parseItem(el, fallbackNumber) {
-    var L = lines(el);
+    var L = lines(el), code = '';
+    var pre = el.querySelector('pre');
+    if (pre) {
+      var codeLines = lines(pre);
+      for (var s0 = 0; s0 + codeLines.length <= L.length; s0++) {
+        if (codeLines.every(function (c, j) { return L[s0 + j] === c; })) { L.splice(s0, codeLines.length); break; }
+      }
+      code = String(pre.innerText || pre.textContent || '').replace(/\u00a0/g, ' ').replace(/\s+$/, '');
+    }
     var out = { number: fallbackNumber, question: '', yourAnswer: '', correctAnswer: '', explanation: '' };
     var mode = 'pre', expl = [], yourParts = [], corrParts = [], m;
     var qRe = /^(?:Q(?:uestion)?\s*)?(\d+)\s*[.):]?\s*(.*)$/i;
@@ -70,7 +78,7 @@
     out.yourAnswer = clean(yourParts.join(' '));
     out.correctAnswer = clean(corrParts.join(' '));
     out.explanation = clean(expl.join(' '));
-    out.question = clean(out.question);
+    out.question = clean(out.question) + (code ? '\n' + code : '');
     return out;
   }
 
@@ -86,7 +94,7 @@
   }
 
   function sendIfItems(knownScore) {
-    var els = Array.prototype.filter.call(document.querySelectorAll('.review-item'), visible);
+    var els = Array.prototype.filter.call(document.querySelectorAll('.review-item, section.review > article'), visible);
     if (!els.length) return false;
     var missed = els.map(function (el, i) { return parseItem(el, i + 1); })
       .filter(function (x) { return x.question; });
