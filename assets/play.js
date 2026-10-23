@@ -4,7 +4,7 @@
   var CFG = window.APCSP_CONFIG || {};
   var params = new URLSearchParams(location.search);
   var fileId = params.get('id');
-  var category = params.get('c') || 'quizzes';
+  var isQuiz = category === 'quizzes' || category === 'tests';
   var isQuiz = category === 'quizzes';
   var STUDENT_KEY = 'apcsp_student';
 
