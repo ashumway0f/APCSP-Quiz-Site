@@ -4,9 +4,12 @@
   var CACHE_KEY = 'apcsp_index_v1';
   var CATS = [
     { id: 'quizzes',    label: 'Quizzes',    empty: 'No quizzes yet.' },
+    { id: 'tests',      label: 'Unit Tests', empty: 'No unit tests yet.' },
     { id: 'games',      label: 'Games',      empty: 'No games yet.' },
-    { id: 'flashcards', label: 'Flashcards', empty: 'No flashcards yet.' }
+    { id: 'flashcards', label: 'Flashcards', empty: 'No flashcards yet.' },
+    { id: 'review',     label: 'Review',     empty: '' }
   ];
+  var reviewData = null; // missed-question summary, loaded the first time the Review tab opens
   var items = [];
   var current = (location.hash || '').replace('#', '');
   if (!CATS.some(function (c) { return c.id === current; })) current = 'quizzes';
@@ -27,7 +30,7 @@
     tabsEl.innerHTML = '';
     CATS.forEach(function (c) {
       var n = items.filter(function (i) { return i.category === c.id; }).length;
-      var b = el('button', 'tab' + (c.id === current ? ' is-on' : ''), c.label + (items.length ? ' (' + n + ')' : ''));
+      var b = el('button', 'tab' + (c.id === current ? ' is-on' : ''), c.label + (items.length && c.id !== 'review' ? ' (' + n + ')' : ''));
       b.type = 'button';
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', c.id === current ? 'true' : 'false');
@@ -42,6 +45,7 @@
 
   function renderList() {
     listEl.innerHTML = '';
+    if (current === 'review') { renderReview(); return; }
     var cat = CATS.filter(function (c) { return c.id === current; })[0];
     var rows = items.filter(function (i) { return i.category === current; });
     if (!rows.length) { listEl.appendChild(el('p', 'loading', cat.empty)); return; }
@@ -65,6 +69,48 @@
         a.appendChild(el('span', 'n', 'Updated ' + niceDate(r.updated)));
         listEl.appendChild(a);
       });
+    });
+  }
+
+  function renderReview() {
+    if (!configured()) { listEl.appendChild(el('p', 'status', 'The site is not connected yet (see README.md).')); return; }
+    if (reviewData === null) {
+      listEl.appendChild(el('p', 'loading', 'Loading\u2026'));
+      fetch(CFG.APPS_SCRIPT_URL + '?action=review')
+        .then(function (r) { return r.json(); })
+        .then(function (out) {
+          if (!out.ok) throw new Error(out.error || 'Could not load');
+          reviewData = out.items || [];
+          if (current === 'review') renderList();
+        })
+        .catch(function () {
+          if (current !== 'review') return;
+          listEl.innerHTML = '';
+          showError('Could not load the review questions.');
+        });
+      return;
+    }
+    listEl.appendChild(el('p', 'lede', 'Flashcards built from the questions our class misses most. Pick a quiz, or review them all.'));
+    if (!reviewData.length) {
+      listEl.appendChild(el('p', 'loading', 'No missed questions yet. As students finish quizzes, the questions the class misses will show up here.'));
+      return;
+    }
+    var per = {}, order = [];
+    reviewData.forEach(function (q) {
+      if (!q.quizId) return;
+      if (!per[q.quizId]) { per[q.quizId] = { id: q.quizId, title: q.quizTitle || 'Quiz', n: 0 }; order.push(q.quizId); }
+      per[q.quizId].n++;
+    });
+    function row(href, title, count) {
+      var a = el('a', 'quiz-row');
+      a.href = href;
+      a.appendChild(el('span', 't', title));
+      a.appendChild(el('span', 'n', count + (count === 1 ? ' question' : ' questions')));
+      listEl.appendChild(a);
+    }
+    row('review.html', 'All quizzes: most missed', reviewData.length);
+    order.sort(function (a, b) { return per[a].title.localeCompare(per[b].title); }).forEach(function (id) {
+      row('review.html?quiz=' + encodeURIComponent(id), per[id].title, per[id].n);
     });
   }
 
