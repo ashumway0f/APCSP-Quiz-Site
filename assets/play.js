@@ -4,8 +4,8 @@
   var CFG = window.APCSP_CONFIG || {};
   var params = new URLSearchParams(location.search);
   var fileId = params.get('id');
-  var isQuiz = category === 'quizzes' || category === 'tests';
-  var isQuiz = category === 'quizzes';
+  var category = params.get('c') || 'quizzes';
+  var isQuiz = category === 'quizzes' || category === 'tests' || category === 'reviews';
   var STUDENT_KEY = 'apcsp_student';
 
   var $ = function (id) { return document.getElementById(id); };
@@ -56,7 +56,7 @@
       if (!out.ok) throw new Error(out.error || 'Could not load');
       title = out.title || 'Activity';
       $('title').textContent = title;
-      document.title = title + ' | AP CSP practice';
+      document.title = title + ' | APCSP';
       var html = out.html;
       if (isQuiz) {
         var tag = '<script>' + reporter + '<\/script>';

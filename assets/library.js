@@ -10,6 +10,7 @@
     { id: 'review',     label: 'Review',     empty: '' }
   ];
   var reviewData = null; // missed-question summary, loaded the first time the Review tab opens
+  var reviewFailed = false;
   var items = [];
   var current = (location.hash || '').replace('#', '');
   if (!CATS.some(function (c) { return c.id === current; })) current = 'quizzes';
@@ -29,8 +30,8 @@
   function renderTabs() {
     tabsEl.innerHTML = '';
     CATS.forEach(function (c) {
-      var n = items.filter(function (i) { return i.category === c.id; }).length;
-      var b = el('button', 'tab' + (c.id === current ? ' is-on' : ''), c.label + (items.length && c.id !== 'review' ? ' (' + n + ')' : ''));
+      var n = items.filter(function (i) { return i.category === (c.id === 'review' ? 'reviews' : c.id); }).length;
+      var b = el('button', 'tab' + (c.id === current ? ' is-on' : ''), c.label + (items.length && (c.id !== 'review' || n > 0) ? ' (' + n + ')' : ''));
       b.type = 'button';
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', c.id === current ? 'true' : 'false');
@@ -43,14 +44,8 @@
     try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { return ''; }
   }
 
-  function renderList() {
-    listEl.innerHTML = '';
-    if (current === 'review') { renderReview(); return; }
-    var cat = CATS.filter(function (c) { return c.id === current; })[0];
-    var rows = items.filter(function (i) { return i.category === current; });
-    if (!rows.length) { listEl.appendChild(el('p', 'loading', cat.empty)); return; }
-
-    // group by unit (items with no unit go last)
+  // lists files grouped by unit (files with no unit number go last)
+  function renderGroups(rows) {
     var groups = {};
     rows.forEach(function (r) {
       var k = r.unit === null || r.unit === undefined ? 'zz' : String(1000 + r.unit);
@@ -58,8 +53,7 @@
     });
     Object.keys(groups).sort().forEach(function (k) {
       var rowsIn = groups[k].sort(function (a, b) { return a.title.localeCompare(b.title); });
-      var h = el('h2', 'unit', k === 'zz' ? 'Other' : 'Unit ' + (Number(k) - 1000));
-      listEl.appendChild(h);
+      listEl.appendChild(el('h2', 'unit', k === 'zz' ? 'Other' : 'Unit ' + (Number(k) - 1000)));
       rowsIn.forEach(function (r) {
         var a = el('a', 'quiz-row');
         a.href = 'play.html?c=' + encodeURIComponent(r.category) + '&id=' + encodeURIComponent(r.id);
@@ -72,10 +66,21 @@
     });
   }
 
+  function renderList() {
+    listEl.innerHTML = '';
+    if (current === 'review') { renderReview(); return; }
+    var cat = CATS.filter(function (c) { return c.id === current; })[0];
+    var rows = items.filter(function (i) { return i.category === current; });
+    if (!rows.length) { listEl.appendChild(el('p', 'loading', cat.empty)); return; }
+    renderGroups(rows);
+  }
+
   function renderReview() {
+    var files = items.filter(function (i) { return i.category === 'reviews'; });
+    if (files.length) { listEl.appendChild(el('p', 'lede', 'Review quizzes, grouped by unit.')); renderGroups(files); }
     if (!configured()) { listEl.appendChild(el('p', 'status', 'The site is not connected yet (see README.md).')); return; }
     if (reviewData === null) {
-      listEl.appendChild(el('p', 'loading', 'Loading\u2026'));
+      listEl.appendChild(el('p', 'loading', 'Loading the class flashcards\u2026'));
       fetch(CFG.APPS_SCRIPT_URL + '?action=review')
         .then(function (r) { return r.json(); })
         .then(function (out) {
@@ -85,11 +90,11 @@
         })
         .catch(function () {
           if (current !== 'review') return;
-          listEl.innerHTML = '';
-          showError('Could not load the review questions.');
+          reviewData = []; reviewFailed = true; renderList();
         });
       return;
     }
+    if (reviewFailed) { listEl.appendChild(el('p', 'status is-bad', 'Could not load the class flashcards. Reload the page to try again.')); return; }
     listEl.appendChild(el('p', 'lede', 'Flashcards built from the questions our class misses most. Pick a quiz, or review them all.'));
     if (!reviewData.length) {
       listEl.appendChild(el('p', 'loading', 'No missed questions yet. As students finish quizzes, the questions the class misses will show up here.'));
